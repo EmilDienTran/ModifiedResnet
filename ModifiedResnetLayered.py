@@ -7,8 +7,8 @@ from CustomBlocks import MultiHeadAttentionBlock
 class ModifiedResNetLayered(nn.Module):
     def __init__(self, num_classes=100):
         super(ModifiedResNetLayered, self).__init__()
+        self.inplanes = 64
         base = resnet18(weights=None)
-        base2 = resnet18(weights=None)
 
         self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn1 = base.bn1
@@ -21,8 +21,8 @@ class ModifiedResNetLayered(nn.Module):
         self.Convolution_layer3 = base.layer3
 
         #Branch2 - Attention Heavy Branch
-        self.attention_layer2 = self._make_layer(MultiHeadAttentionBlock, )
-        self.attention_layer3 = base2.layer3
+        self.attention_layer2 = self._make_layer(MultiHeadAttentionBlock, 128, 2, attention_heads=2, stride=2)
+        self.attention_layer3 = self._make_layer(MultiHeadAttentionBlock, 256, 2, attention_heads=2, stride=2)
 
         self.fusion = LayerFusion(256)
 
@@ -30,7 +30,17 @@ class ModifiedResNetLayered(nn.Module):
         self.avgpool = base.avgpool
         self.fc = nn.Linear(512, num_classes)
 
-    def _make_layer(self, block, planes, blocks, stride=1):
+    def _make_layer(self, block, planes, blocks, attention_heads, stride=1):
+        '''
+        :param block: The name of the block that the model uses to generate the layer
+        :param planes: The amount of neurons per layer - input
+        :param blocks: The amount of blocks(How many times is it repeated?)
+        :param attention_heads: Multi-head attention heads specific param
+        :param stride: Stride of the blocks - enables or disables downsampling
+
+        Note: Standard ResNet18 has [2, 2, 2, 2] blocks per layer.
+          Increasing blocks adds depth but increases computation time.
+        '''
         downsample = None
         if stride != 1 or self.inplanes != planes:
             downsample = nn.Sequential(
@@ -38,10 +48,10 @@ class ModifiedResNetLayered(nn.Module):
                 nn.BatchNorm2d(planes),
             )
         layers = []
-        layers.append(block(self.inplanes, planes, stride, downsample))
+        layers.append(block(self.inplanes, planes, stride, downsample, attention_heads=attention_heads))
         self.inplanes = planes
         for i in range(1, blocks):
-            layers.append(block(self.inplanes, planes))
+            layers.append(block(self.inplanes, planes, attention_heads=attention_heads))
 
         return nn.Sequential(*layers)
 
@@ -75,9 +85,7 @@ class ModifiedResNetLayered(nn.Module):
         return out
 
     def AttentionBranch(self, x):
-        out = self.multihead(x)
-        out = self.attention_layer2(out)
-        out = self.attention(out)
+        out = self.attention_layer2(x)
         out = self.attention_layer3(out)
         return out
 

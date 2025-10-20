@@ -16,7 +16,7 @@ class SelfAttention2D(nn.Module):
         self.key = nn.Conv2d(input_dim, input_dim, kernel_size=1)
         self.value = nn.Conv2d(input_dim, input_dim, kernel_size=1)
         self.dropout = nn.Dropout(0.2)
-        self.gamma = nn.Parameter(torch.zeros(1))
+        self.gamma = nn.Parameter(torch.tensor([0.2]))
 
     def forward(self, x):
         batch, channels, height, width = x.size()
@@ -52,8 +52,8 @@ class MultiHeadAttention(nn.Module):
         self.query = nn.Conv2d(input_dim, input_dim, kernel_size=1)
         self.key = nn.Conv2d(input_dim, input_dim, kernel_size=1)
         self.value = nn.Conv2d(input_dim, input_dim, kernel_size=1)
-        self.dropout = nn.Dropout(0.2)
-        self.gamma = nn.Parameter(torch.zeros(1))
+        self.dropout = nn.Dropout(0.3)
+        self.gamma = nn.Parameter(torch.tensor([0.5]))
 
 
     def forward(self, x):
