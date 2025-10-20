@@ -15,7 +15,7 @@ class SelfAttention2D(nn.Module):
         self.query = nn.Conv2d(input_dim, input_dim, kernel_size=1)
         self.key = nn.Conv2d(input_dim, input_dim, kernel_size=1)
         self.value = nn.Conv2d(input_dim, input_dim, kernel_size=1)
-        self.dropout = nn.Dropout(0.3)
+        #self.dropout = nn.Dropout(0.3)
         self.gamma = nn.Parameter(torch.rand(1))
 
     def forward(self, x):
@@ -27,7 +27,7 @@ class SelfAttention2D(nn.Module):
 
         attention_output, _ = self.attention(query, key, value)
         attention_output = attention_output.view(batch, channels, height, width)
-        attention_output = self.dropout(attention_output)
+        #attention_output = self.dropout(attention_output)
         attention_output = self.gamma * attention_output + x
 
         return attention_output
@@ -52,7 +52,7 @@ class MultiHeadAttention(nn.Module):
         self.query = nn.Conv2d(input_dim, input_dim, kernel_size=1)
         self.key = nn.Conv2d(input_dim, input_dim, kernel_size=1)
         self.value = nn.Conv2d(input_dim, input_dim, kernel_size=1)
-        self.dropout = nn.Dropout(0.3)
+        #self.dropout = nn.Dropout(0.3)
         self.gamma = nn.Parameter(torch.rand(1))
 
 
@@ -66,7 +66,7 @@ class MultiHeadAttention(nn.Module):
         attention_output, _ = self.attention(query, key, value)
         attention_output = attention_output.permute(0, 1, 3, 2).contiguous()
         attention_output = attention_output.view(batch, channels, height, width)
-        attention_output = self.dropout(attention_output)
+        #attention_output = self.dropout(attention_output)
         attention_output = self.gamma * attention_output + x
 
 
@@ -108,18 +108,19 @@ class LayerFusion(nn.Module):
         self.bn1 = nn.BatchNorm2d(input_dim)
         self.bn2 = nn.BatchNorm2d(input_dim)
         self.relu = nn.ReLU(inplace=True)
-        self.dropout = nn.Dropout(0.2)
+        self.dropout = nn.Dropout(0.1)
 
 
-    def forward(self, x1, x2):
-        x1 = self.bn1(x1)
-        x2 = self.bn2(x2)
-        weight1 = torch.sigmoid(self.gamma)
-        weight2 = 1 - weight1
-        x = weight1 * x1 + weight2 * x2
+    def forward(self, convolution, attention):
+        convolution = self.bn1(convolution)
+        attention = self.bn2(attention)
+        weight_convolution = torch.sigmoid(self.gamma)
+        weight_attention = 1 - weight_convolution
+        x = weight_convolution * convolution + weight_attention * attention
         x = self.dropout(x)
         x = self.relu(x)
         return x
+
 
 
 

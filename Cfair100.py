@@ -100,8 +100,9 @@ if __name__ == '__main__':
             train_correct += torch.sum(labels == predicted.data).item()
 
             if i % 100 == 99:
-                print(f'Epoch [{epoch + 1}], Step [{i + 1}], Loss: {running_loss / 100:.4f}')
+                print(f"Epoch [{epoch + 1}], Step [{i + 1}], Loss: {running_loss / 100:.4f}")
                 print(f"Conv branch weight: {sigmoidfunc(model.fusion.gamma.item()):.3f} | Attention Branch Weight: {1 - sigmoidfunc(model.fusion.gamma.item()):.3f}")
+                print(f"Fusion weight(No sigmoid norm): {model.fusion.gamma.item():.3f}")
 
                 running_loss = 0.0
 
