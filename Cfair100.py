@@ -2,8 +2,10 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torchvision
+from torchvision.datasets import CIFAR10, CIFAR100
 from torchvision.transforms import v2
 from ModifiedResnetAttention import ModifiedResNetAttention
+from ModifiedResnetLayered import ModifiedResNetLayered
 from torchvision.models import resnet18, ResNet18_Weights
 import torch.multiprocessing as mp
 import numpy as np
@@ -15,7 +17,8 @@ if __name__ == '__main__':
     transforms_train = v2.Compose([
         v2.RandomCrop(32, padding=4),
         v2.RandomHorizontalFlip(),
-        v2.AutoAugment(policy=v2.AutoAugment.CIFAR10),
+        v2.RandomRotation(degrees=9),
+        v2.RandomVerticalFlip(),
         v2.ToImage(),
         v2.ToDtype(torch.float32, scale=True),
         v2.Normalize(
@@ -47,13 +50,18 @@ if __name__ == '__main__':
                                               shuffle=False)
 
     Resnet18_normal = False
+    Resnet18_attention = False
+    Resnet18_attention_layered = True
+
     if Resnet18_normal == True:
         model = resnet18(weights=None)
         model.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
         model.maxpool = nn.Identity()
         model.fc = nn.Linear(512, 100),
-    else:
+    elif Resnet18_attention == True:
         model = ModifiedResNetAttention()
+    elif Resnet18_attention_layered == True:
+        model = ModifiedResNetLayered()
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.to(device)
@@ -63,8 +71,7 @@ if __name__ == '__main__':
     print(f"Model = {model}")
 
     criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
-    optimizer = optim.SGD(model.parameters(), lr=0.05, momentum=0.9, weight_decay=5e-4)
-    #scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[60, 120, 180], gamma=0.2)
+    optimizer = optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4)
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer=optimizer, T_max=400, eta_min=1e-5)
     num_epochs = 400
 
@@ -94,8 +101,7 @@ if __name__ == '__main__':
 
             if i % 100 == 99:
                 print(f'Epoch [{epoch + 1}], Step [{i + 1}], Loss: {running_loss / 100:.4f}')
-                #print(f"Conv branch weight: {sigmoidfunc(model.fusion.gamma.item()):.3f} | Attention Branch Weight: {1 - sigmoidfunc(model.fusion.gamma.item()):.3f}")
-                #print(f"Attention weights: {model.layer2.MultiHeadAttention.attention_output}")
+                print(f"Conv branch weight: {sigmoidfunc(model.fusion.gamma.item()):.3f} | Attention Branch Weight: {1 - sigmoidfunc(model.fusion.gamma.item()):.3f}")
 
                 running_loss = 0.0
 

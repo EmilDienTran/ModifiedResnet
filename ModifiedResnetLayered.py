@@ -21,8 +21,8 @@ class ModifiedResNetLayered(nn.Module):
         self.Convolution_layer3 = base.layer3
 
         #Branch2 - Attention Heavy Branch
-        self.attention_layer2 = self._make_layer(MultiHeadAttentionBlock, 128, 2, attention_heads=2, stride=2)
-        self.attention_layer3 = self._make_layer(MultiHeadAttentionBlock, 256, 2, attention_heads=2, stride=2)
+        self.attention_layer2 = self._make_layer(MultiHeadAttentionBlock, 128, 2, attention_heads=4, stride=2)
+        self.attention_layer3 = self._make_layer(MultiHeadAttentionBlock, 256, 2, attention_heads=1, stride=2)
 
         self.fusion = LayerFusion(256)
 
