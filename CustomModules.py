@@ -49,11 +49,12 @@ class MultiHeadAttention(nn.Module):
         self.num_heads = num_heads
         self.head_dim = input_dim // num_heads
 
+
         self.query = nn.Conv2d(input_dim, input_dim, kernel_size=1)
         self.key = nn.Conv2d(input_dim, input_dim, kernel_size=1)
         self.value = nn.Conv2d(input_dim, input_dim, kernel_size=1)
-        #self.dropout = nn.Dropout(0.3)
-        self.gamma = nn.Parameter(torch.rand(1))
+
+        self.gamma = nn.Parameter(torch.zeros(1))
 
 
     def forward(self, x):
@@ -66,9 +67,7 @@ class MultiHeadAttention(nn.Module):
         attention_output, _ = self.attention(query, key, value)
         attention_output = attention_output.permute(0, 1, 3, 2).contiguous()
         attention_output = attention_output.view(batch, channels, height, width)
-        #attention_output = self.dropout(attention_output)
         attention_output = self.gamma * attention_output + x
-
 
         return attention_output
 
@@ -107,8 +106,9 @@ class LayerFusion(nn.Module):
         self.gamma = nn.Parameter(torch.tensor([0.5]))
         self.bn1 = nn.BatchNorm2d(input_dim)
         self.bn2 = nn.BatchNorm2d(input_dim)
-        self.relu = nn.ReLU(inplace=True)
+        self.bn = nn.BatchNorm2d(input_dim)
         self.dropout = nn.Dropout(0.1)
+        self.relu = nn.ReLU(inplace=True)
 
 
     def forward(self, convolution, attention):
@@ -117,9 +117,13 @@ class LayerFusion(nn.Module):
         weight_convolution = torch.sigmoid(self.gamma)
         weight_attention = 1 - weight_convolution
         x = weight_convolution * convolution + weight_attention * attention
+
+        x = self.bn(x)
         x = self.dropout(x)
         x = self.relu(x)
         return x
+
+
 
 
 

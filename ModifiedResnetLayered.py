@@ -7,6 +7,7 @@ from CustomBlocks import MultiHeadAttentionBlock
 class ModifiedResNetLayered(nn.Module):
     def __init__(self, num_classes=100):
         super(ModifiedResNetLayered, self).__init__()
+        self.name = 'ModifiedResNetLayered'
         self.inplanes = 64
         base = resnet18(weights=None)
 
