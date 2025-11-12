@@ -49,7 +49,6 @@ class MultiHeadAttention(nn.Module):
         self.num_heads = num_heads
         self.head_dim = input_dim // num_heads
 
-
         self.query = nn.Conv2d(input_dim, input_dim, kernel_size=1)
         self.key = nn.Conv2d(input_dim, input_dim, kernel_size=1)
         self.value = nn.Conv2d(input_dim, input_dim, kernel_size=1)
@@ -77,25 +76,6 @@ class MultiHeadAttention(nn.Module):
         p_attn = torch.softmax(scores, dim=-1)
         return torch.matmul(p_attn, value), p_attn
 
-class MultiModalFeatureFusion(nn.Module):
-    '''
-    Multi-modal feature fusion module. It takes in two seperate forms of an image.
-    The goal is to train two seperate Resnet50s to learn different important features of an image.
-    Then those models are combined - training two seperate models.
-    '''
-    def __init__(self, input_dim, input_dim2):
-        super(MultiModalFeatureFusion, self).__init__()
-
-        self.conv1 = nn.Conv2d(input_dim, 256, kernel_size=1)
-        self.conv2 = nn.Conv2d(input_dim2, 256, kernel_size=1)
-        self.fusion = nn.Conv2d(512, 256, kernel_size=1)
-
-    def forward(self, x1, x2):
-        x1 = self.conv1(x1)
-        x2 = self.conv2(x2)
-        x = torch.cat((x1, x2), 1)
-        x = self.fusion(x)
-        return x
 
 class LayerFusion(nn.Module):
     '''
@@ -104,20 +84,15 @@ class LayerFusion(nn.Module):
     def __init__(self, input_dim):
         super(LayerFusion, self).__init__()
         self.gamma = nn.Parameter(torch.tensor([0.5]))
-        self.bn1 = nn.BatchNorm2d(input_dim)
-        self.bn2 = nn.BatchNorm2d(input_dim)
         self.bn = nn.BatchNorm2d(input_dim)
-        self.dropout = nn.Dropout(0.1)
+        self.dropout = nn.Dropout(0.2)
         self.relu = nn.ReLU(inplace=True)
 
 
     def forward(self, convolution, attention):
-        convolution = self.bn1(convolution)
-        attention = self.bn2(attention)
         weight_convolution = torch.sigmoid(self.gamma)
         weight_attention = 1 - weight_convolution
         x = weight_convolution * convolution + weight_attention * attention
-
         x = self.bn(x)
         x = self.dropout(x)
         x = self.relu(x)

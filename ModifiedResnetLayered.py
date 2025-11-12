@@ -65,12 +65,14 @@ class ModifiedResNetLayered(nn.Module):
         x = self.layer1(x)
 
         '''Resnet Branch 1'''
-        x_branch1 = self.ConvolutionBranch(x)
+        x_conv_branch = self.Convolution_layer2(x)
+        x_conv_branch = self.Convolution_layer3(x_conv_branch)
 
         '''Resnet Branch 2'''
-        x_branch2 = self.AttentionBranch(x)
+        x_attention_branch = self.attention_layer2(x)
+        x_attention_branch = self.attention_layer3(x_attention_branch)
 
-        x = self.fusion(x_branch1, x_branch2)
+        x = self.fusion(x_conv_branch, x_attention_branch)
         x = self.layer4(x)
 
         x = self.avgpool(x)
@@ -79,15 +81,6 @@ class ModifiedResNetLayered(nn.Module):
         return x
 
 
-    def ConvolutionBranch(self, x):
-        out = self.Convolution_layer2(x)
-        out = self.Convolution_layer3(out)
-        return out
-
-    def AttentionBranch(self, x):
-        out = self.attention_layer2(x)
-        out = self.attention_layer3(out)
-        return out
 
 
 

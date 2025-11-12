@@ -42,10 +42,10 @@ class MultiHeadAttentionBlock(nn.Module):
         self.bn1 = nn.BatchNorm2d(output_dim)
         self.relu1 = nn.ReLU()
 
-        self.cpe = nn.Conv2d(output_dim, output_dim, kernel_size=3, stride=1, padding=1, groups=output_dim)
+        #self.cpe = nn.Conv2d(output_dim, output_dim, kernel_size=3, stride=1, padding=1, groups=output_dim)
         self.attention = MultiHeadAttention(output_dim, attention_heads)
 
-        self.conv2 = nn.Conv2d(output_dim, output_dim, kernel_size = 1)
+        self.conv2 = nn.Conv2d(output_dim, output_dim, kernel_size = 3, stride = 1, padding = 1)
         self.bn2 = nn.BatchNorm2d(output_dim)
         self.downsample = downsample
         self.relu = nn.ReLU()
@@ -57,7 +57,7 @@ class MultiHeadAttentionBlock(nn.Module):
         x = self.bn1(x)
         x = self.relu(x)
 
-        x = x + self.cpe(x)
+        #x = x + self.cpe(x)
         x = self.attention(x)
 
         x = self.conv2(x)

@@ -16,8 +16,8 @@ class ModifiedResNetAttention(nn.Module):
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.Identity()
         self.layer1 = base.layer1
-        self.layer2 = self._make_layer(MultiHeadAttentionBlock, planes=128, blocks=2, attention_heads=8, stride=2)
-        self.layer3 = self._make_layer(MultiHeadAttentionBlock, planes=256, blocks=2, attention_heads=8, stride=2)
+        self.layer2 = self._make_layer(MultiHeadAttentionBlock, planes=128, blocks=2, attention_heads=4, stride=2)
+        self.layer3 = self._make_layer(MultiHeadAttentionBlock, planes=256, blocks=2, attention_heads=4, stride=2)
         self.layer4 = base.layer4
 
         self.avgpool = base.avgpool
