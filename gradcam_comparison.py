@@ -9,15 +9,11 @@ import matplotlib.pyplot as plt
 from ModifiedResnetAttention import ModifiedResNetAttention
 from ModifiedResnetLayered import ModifiedResNetLayered
 '''
-This code is mostly provided by Claude - the GradCam Class and 
-
+GradCam Analysis provided by Claude.
 '''
 
-
-
-
-
 class GradCAM:
+
     def __init__(self, model, target_layer):
         self.model = model
         self.target_layer = target_layer
@@ -122,7 +118,7 @@ test_dataset = torchvision.datasets.OxfordIIITPet(
 )
 class_names = test_dataset.classes
 
-IMAGE_INDEX = 2400  # Change this to test different images
+IMAGE_INDEX = 10  # Change this to test different images
 original_img, actual_class_idx = test_dataset[IMAGE_INDEX]
 actual_class_name = class_names[actual_class_idx]
 

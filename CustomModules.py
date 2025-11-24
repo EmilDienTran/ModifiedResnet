@@ -9,6 +9,8 @@ class SelfAttention2D(nn.Module):
     This functions between each layer, but best where the width and the height - after convolution - isn't too small
     In resnet we 'compress' the image between the layers, and attention requires a big L.
     It is therefore recommended to place attention in layer1 -> layer2
+
+    Adapted from: https://www.codegenes.net/blog/self-attention-gan-pytorch/
     '''
     def __init__(self, input_dim):
         super(SelfAttention2D, self).__init__()
@@ -40,7 +42,7 @@ class SelfAttention2D(nn.Module):
 
 class MultiHeadAttention(nn.Module):
     '''
-    multi-head attention module.
+    multi-head attention module - further adaptation from: adapted from: https://www.codegenes.net/blog/self-attention-gan-pytorch/
     '''
     def __init__(self, input_dim, num_heads=8):
         super(MultiHeadAttention, self).__init__()

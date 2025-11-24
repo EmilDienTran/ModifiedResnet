@@ -2,7 +2,6 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
-import torch
 import torch.nn as nn
 import torch.optim as optim
 from ModifiedResnetAttention import ModifiedResNetAttention
@@ -93,19 +92,20 @@ if __name__ == '__main__':
         train_dataset = torchvision.datasets.OxfordIIITPet(root="data/",
                                                            split='trainval',
                                                            transform=transforms_train,
-                                                           download=True)
+                                                           download=True
+                                                           )
         test_dataset = torchvision.datasets.OxfordIIITPet(root="data/",
                                                           split='test',
                                                           transform=transform_test,
-                                                          download=True)
-
+                                                          download=True
+                                                          )
         train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
                                                    batch_size=16,
                                                    shuffle=True,
                                                    num_workers=8,
                                                    pin_memory=True,
-                                                   persistent_workers=True)
-
+                                                   persistent_workers=True
+                                                   )
         test_loader = torch.utils.data.DataLoader(dataset=test_dataset,
                                                   batch_size=16,
                                                   shuffle=False,
@@ -127,27 +127,29 @@ if __name__ == '__main__':
     model.fc = nn.Linear(512, num_classes)
     models.append(model)
 
-
-    #Resnet without Branchs - Attention
+    '''
+    #Resnet without Branches - Attention
     model = ModifiedResNetAttention(num_classes=num_classes)
     if dataset == 'oxford':
         model.conv1 = nn.Conv2d(3, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
     models.append(model)
+
 
     #Resnet with two Branches - Attention
     model = ModifiedResNetLayered(num_classes=num_classes)
     if dataset == 'oxford':
         model.conv1 = nn.Conv2d(3, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
     models.append(model)
+    '''
 
-    for i in range(3):
+    for run_count in range(1):
         for model in models:
             device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
             model.to(device)
 
             # Training setup
             num_epochs = 200
-            criterion = nn.CrossEntropyLoss()
+            criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
             optimizer = optim.SGD(model.parameters(), lr=0.07, momentum=0.9, weight_decay=5e-4)
             scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer=optimizer, T_max=num_epochs, eta_min=1e-5)
 
@@ -212,7 +214,7 @@ if __name__ == '__main__':
 
 
             start_time = time.time()
-            writer = SummaryWriter(f'runs/OXFORD/{model.name}_Epochs_{num_epochs}_{dataset}_{time.strftime("%Y%m%d_%H%M%S")}')
+            writer = SummaryWriter(f'runs/OXFORD/{model.name}_Epochs_{num_epochs}_Run_{run_count}_{dataset}_{time.strftime("%Y%m%d_%H%M%S")}')
             os.makedirs('checkpoints', exist_ok=True)
             best_val_acc = 0.0
 
@@ -238,15 +240,6 @@ if __name__ == '__main__':
                     _, predicted = torch.max(outputs.data, 1)
                     train_total += labels.size(0)
                     train_correct += torch.sum(labels == predicted.data).item()
-
-                    '''
-                    if i % 100 == 99:
-                        #print(f"Epoch [{epoch + 1}], Step [{i + 1}] | Loss: {running_loss / 100:.4f}")
-                        if model.name == 'ModifiedResNetLayered':
-                            #print(f"Conv branch weight: {sigmoidfunc(model.fusion.gamma.item()):.3f} | Attention Branch Weight: {1 - sigmoidfunc(model.fusion.gamma.item()):.3f}")
-                            #print(f"Fusion weight(No sigmoid norm): {model.fusion.gamma.item():.3f}")
-                        running_loss = 0.0
-                   '''
 
                 train_time = time.time() - train_start
                 scheduler.step()
@@ -281,10 +274,12 @@ if __name__ == '__main__':
                 test_accuracy = 100 * correct / len(test_dataset)
                 eval_time = time.time() - eval_start
 
-                # Model Saving for GradCam analysis
+
+                # Model Saving for GradCam analysis - provided by LLM (Claude)
                 if test_accuracy > best_val_acc:
+                    os.makedirs(f'checkpoints/Oxford Pets {run_count}', exist_ok=True)
                     best_val_acc = test_accuracy
-                    checkpoint_path = f'checkpoints/{model.name}_{dataset}_best.pth'
+                    checkpoint_path = f'checkpoints/Oxford Pets {run_count}/{model.name}_{dataset}_best.pth'
                     torch.save({
                         'epoch': epoch,
                         'model_state_dict': model.state_dict(),
@@ -295,8 +290,9 @@ if __name__ == '__main__':
                     cm = confusion_matrix(all_targets, all_predicted)
                     print("\nConfusion Matrix")
                     print(cm)
-                    np.save(f'checkpoints/Oxford Pets {i}/{model.name}_{dataset}_confusion_matrix.npy', cm)
+                    np.save(f'checkpoints/Oxford Pets {run_count}/{model.name}_{dataset}_confusion_matrix.npy', cm)
                     print(f"✓ Saved best model: {test_accuracy:.2f}%")
+
 
                 # === TENSORBOARD LOGGING ===
                 writer.add_scalar('Accuracy/train', train_accuracy, epoch)
