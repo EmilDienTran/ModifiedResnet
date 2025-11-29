@@ -50,8 +50,10 @@ if __name__ == '__main__':
                 [0.26733429, 0.25643846, 0.27615047])
         ])
 
-        train_dataset = torchvision.datasets.CIFAR100(root="data/", train=True, transform=transforms_train)
-        test_dataset = torchvision.datasets.CIFAR100(root="data/", train=False, transform=transform_test)
+        train_dataset = torchvision.datasets.CIFAR100(root="data/", train=True, transform=transforms_train,
+                                                           download=True)
+        test_dataset = torchvision.datasets.CIFAR100(root="data/", train=False, transform=transform_test,
+                                                           download=True)
 
         train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
                                                    batch_size=64,
@@ -127,7 +129,7 @@ if __name__ == '__main__':
     model.fc = nn.Linear(512, num_classes)
     models.append(model)
 
-    '''
+
     #Resnet without Branches - Attention
     model = ModifiedResNetAttention(num_classes=num_classes)
     if dataset == 'oxford':
@@ -140,7 +142,7 @@ if __name__ == '__main__':
     if dataset == 'oxford':
         model.conv1 = nn.Conv2d(3, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
     models.append(model)
-    '''
+
 
     for run_count in range(1):
         for model in models:
